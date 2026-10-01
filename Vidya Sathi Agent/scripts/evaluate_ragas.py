@@ -1,7 +1,6 @@
 import os
 import argparse
-from datasets import Dataset
-
+from datasets import Dataset, Features, Value, Sequence
 try:
     from ragas import evaluate
     from ragas.metrics import (
@@ -63,7 +62,14 @@ def run_evaluation(args):
         "ground_truth": ground_truths
     }
     
-    dataset = Dataset.from_dict(data)
+    features = Features({
+        "question": Value("string"),
+        "answer": Value("string"),
+        "contexts": Sequence(Value("string")),
+        "ground_truth": Value("string")
+    })
+    
+    dataset = Dataset.from_dict(data, features=features)
     
     # 4. Run Evaluation
     print("Running RAGAS metrics: Faithfulness, Answer Relevancy, Context Precision, Context Recall...")
