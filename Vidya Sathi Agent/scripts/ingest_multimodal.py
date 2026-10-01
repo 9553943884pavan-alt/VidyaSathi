@@ -1,14 +1,18 @@
 import os
+import sys
 import argparse
 from pathlib import Path
 import chromadb
 import numpy as np
 
+# Add the parent directory to sys.path so 'config' can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 # Note: You will need to pip install yt-dlp openai-whisper PyMuPDF sentence-transformers
 try:
     import yt_dlp
     import whisper
-    import fitz  # PyMuPDF
+    import pymupdf as fitz  # Updated from import fitz
     from sentence_transformers import SentenceTransformer
 except ImportError:
     print("Please install required packages: pip install yt-dlp openai-whisper PyMuPDF sentence-transformers")
