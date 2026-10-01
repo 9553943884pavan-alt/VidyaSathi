@@ -29,7 +29,8 @@ def simulate_agent_response(question: str):
 
 import json
 
-def run_evaluation(dataset_path: str = "data/eval_dataset.json"):
+def run_evaluation(args):
+    dataset_path = args.dataset
     print("Initializing RAGAS evaluation...")
     
     # 1. Load the golden dataset of questions and expected answers
@@ -65,21 +66,44 @@ def run_evaluation(dataset_path: str = "data/eval_dataset.json"):
     
     # 4. Run Evaluation
     print("Running RAGAS metrics: Faithfulness, Answer Relevancy, Context Precision, Context Recall...")
-    # Note: RAGAS requires OPENAI_API_KEY to be set in the environment to use its LLM as an evaluator
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("\n[WARNING] OPENAI_API_KEY is not set. RAGAS requires an LLM to evaluate the responses.")
-        print("Set it via: export OPENAI_API_KEY='your-key'\n")
-        return
-
-    result = evaluate(
-        dataset,
-        metrics=[
+    
+    evaluate_kwargs = {
+        "dataset": dataset,
+        "metrics": [
             faithfulness,
             answer_relevancy,
             context_precision,
             context_recall,
-        ],
-    )
+        ]
+    }
+    
+    if args.ollama:
+        print(f"Using local Ollama models (LLM: {args.ollama_llm}, Embeddings: {args.ollama_embed})...")
+        try:
+            from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+        except ImportError:
+            print("Please install langchain-openai: pip install langchain-openai")
+            return
+            
+        local_llm = ChatOpenAI(
+            model=args.ollama_llm,
+            base_url="http://localhost:11434/v1",
+            api_key="ollama" # Dummy key
+        )
+        local_embeddings = OpenAIEmbeddings(
+            model=args.ollama_embed,
+            base_url="http://localhost:11434/v1",
+            api_key="ollama"
+        )
+        evaluate_kwargs["llm"] = local_llm
+        evaluate_kwargs["embeddings"] = local_embeddings
+    else:
+        if not os.environ.get("OPENAI_API_KEY"):
+            print("\n[WARNING] OPENAI_API_KEY is not set. RAGAS requires an LLM to evaluate the responses.")
+            print("Set it via: export OPENAI_API_KEY='your-key' or run with --ollama\n")
+            return
+
+    result = evaluate(**evaluate_kwargs)
     
     print("\n=== EVALUATION RESULTS ===")
     print(result)
@@ -91,7 +115,11 @@ def run_evaluation(dataset_path: str = "data/eval_dataset.json"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run RAGAS evaluation on Vidya Sathi Agent")
-    parser.add_argument("--dataset", type=str, help="Path to golden dataset JSON", default=None)
+    parser.add_argument("--dataset", type=str, help="Path to golden dataset JSON", default="data/eval_dataset.json")
+    parser.add_argument("--ollama", action="store_true", help="Use local Ollama instance for evaluation")
+    parser.add_argument("--ollama-llm", type=str, default="llama3.1:70b", help="Ollama LLM model name")
+    parser.add_argument("--ollama-embed", type=str, default="nomic-embed-text", help="Ollama Embeddings model name")
+    
     args = parser.parse_args()
     
-    run_evaluation(args.dataset)
+    run_evaluation(args)
