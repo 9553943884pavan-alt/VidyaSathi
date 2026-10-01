@@ -108,14 +108,51 @@ def ingest_slides(pdf_path: str, collection: chromadb.Collection, embedding_mode
         )
         print(f"Added {len(documents)} slide chunks to ChromaDB.")
 
+def ingest_local_audio(audio_path, collection, embedding_model):
+    print(f"Transcribing local audio with Whisper: {audio_path}")
+    model = whisper.load_model("base")
+    result = model.transcribe(audio_path)
+    
+    print("Ingesting into ChromaDB...")
+    chunks = []
+    metadata = []
+    ids = []
+    
+    for i, segment in enumerate(result["segments"]):
+        text = segment["text"].strip()
+        if not text: continue
+        chunks.append(text)
+        metadata.append({
+            "source": audio_path,
+            "source_type": "audio",
+            "start": segment["start"],
+            "end": segment["end"]
+        })
+        ids.append(f"audio_{Path(audio_path).stem}_{i}")
+        
+    if chunks:
+        print("Generating embeddings...")
+        embeddings = embedding_model.encode(chunks).tolist()
+        
+        collection.add(
+            documents=chunks,
+            embeddings=embeddings,
+            metadatas=metadata,
+            ids=ids
+        )
+        print(f"Added {len(chunks)} audio chunks to ChromaDB.")
+    else:
+        print("No audio transcribed.")
+
 def main():
     parser = argparse.ArgumentParser(description="Ingest multimodal content into ChromaDB")
     parser.add_argument("--youtube", type=str, help="YouTube URL to ingest")
     parser.add_argument("--slides", type=str, help="Path to PDF slide deck to ingest")
+    parser.add_argument("--audio", type=str, help="Path to local audio file to ingest (bypasses YouTube blocks)")
     args = parser.parse_args()
 
-    if not args.youtube and not args.slides:
-        print("Please provide either --youtube or --slides argument.")
+    if not args.youtube and not args.slides and not args.audio:
+        print("Please provide --youtube, --slides, or --audio argument.")
         return
 
     settings = get_settings()
@@ -138,6 +175,9 @@ def main():
         
     if args.slides:
         ingest_slides(args.slides, collection, embedding_model)
+        
+    if args.audio:
+        ingest_local_audio(args.audio, collection, embedding_model)
 
 if __name__ == "__main__":
     main()
