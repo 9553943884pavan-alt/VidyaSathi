@@ -12,6 +12,13 @@ import React from 'react'
 const parseCitation = (raw) => {
   const parts = raw.replace(/^\[|\]$/g, '').split('|').map((p) => p.trim()).filter(Boolean)
   const board = parts[0] || 'NCERT'
+  
+  if (board.toLowerCase() === 'video') {
+    return { type: 'video', url: parts[1], timestamp: parts[2] }
+  } else if (board.toLowerCase() === 'slide') {
+    return { type: 'slide', deck: parts[1], slideNum: parts[2] }
+  }
+
   const subject = parts.length > 3 ? parts[1] : null
   const rest = parts.length > 3 ? parts.slice(2) : parts.slice(1)
   // Last part looks like page numbers when it starts with "pp." / "p."
@@ -21,7 +28,7 @@ const parseCitation = (raw) => {
   }
   const chapter = rest.shift() || null
   const topic = rest.join(' · ') || null
-  return { board, subject, chapter, topic, pages }
+  return { type: 'text', board, subject, chapter, topic, pages }
 }
 
 const SourceList = ({ citations }) => {
@@ -37,7 +44,34 @@ const SourceList = ({ citations }) => {
       </summary>
       <ul className="vs-source-rows">
         {citations.map((citation, idx) => {
-          const { board, subject, chapter, topic, pages } = parseCitation(citation)
+          const parsed = parseCitation(citation)
+          
+          if (parsed.type === 'video') {
+            const timeParam = parsed.timestamp ? `&t=${parsed.timestamp.replace(/[^0-9]/g, '')}s` : '';
+            return (
+              <li key={idx} className="vs-source-row">
+                <span className="vs-source-chip">🎥 Video</span>
+                <span className="vs-source-meta">
+                  <strong><a href={`${parsed.url}${timeParam}`} target="_blank" rel="noopener noreferrer">{parsed.url}</a></strong>
+                  <small>{parsed.timestamp}</small>
+                </span>
+              </li>
+            )
+          }
+          
+          if (parsed.type === 'slide') {
+            return (
+              <li key={idx} className="vs-source-row">
+                <span className="vs-source-chip">📊 Slide</span>
+                <span className="vs-source-meta">
+                  <strong>{parsed.deck}</strong>
+                  <small>{parsed.slideNum}</small>
+                </span>
+              </li>
+            )
+          }
+
+          const { board, subject, chapter, topic, pages } = parsed
           return (
             <li key={idx} className="vs-source-row">
               <span className="vs-source-chip">{board}</span>

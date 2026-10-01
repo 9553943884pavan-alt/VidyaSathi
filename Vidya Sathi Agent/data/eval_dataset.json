@@ -1,0 +1,34 @@
+[
+  {
+    "question": "What is the main postulate of VSEPR theory?",
+    "ground_truth": "The main postulate of VSEPR theory is that electron pairs in the valence shell of a central atom repel each other and arrange themselves in space to minimize this repulsion and maximize the distance between them."
+  },
+  {
+    "question": "How does the hybridization of carbon in methane (CH4) differ from ethene (C2H4)?",
+    "ground_truth": "In methane (CH4), the carbon atom undergoes sp3 hybridization, resulting in a tetrahedral geometry. In ethene (C2H4), the carbon atoms undergo sp2 hybridization, resulting in a trigonal planar geometry with one unhybridized p-orbital forming a pi bond."
+  },
+  {
+    "question": "According to the video lecture, what is the significance of the Reynolds number in fluid dynamics?",
+    "ground_truth": "The Reynolds number is a dimensionless quantity that helps predict flow patterns in different fluid situations. A low Reynolds number indicates laminar flow, while a high Reynolds number indicates turbulent flow."
+  },
+  {
+    "question": "What is the formula for calculating the formal charge of an atom in a molecule?",
+    "ground_truth": "Formal Charge = (Total number of valence electrons in the free atom) - (Total number of non-bonding electrons) - (1/2 * Total number of bonding electrons)."
+  },
+  {
+    "question": "Based on Slide 12, what are the three main types of machine learning?",
+    "ground_truth": "The three main types of machine learning are Supervised Learning, Unsupervised Learning, and Reinforcement Learning."
+  },
+  {
+    "question": "Why is the bond angle in water (H2O) less than the ideal tetrahedral angle?",
+    "ground_truth": "The bond angle in water is 104.5 degrees, which is less than the ideal tetrahedral angle of 109.5 degrees, because the repulsion between the two lone pairs of electrons on the oxygen atom is greater than the repulsion between the bonding pairs, pushing the hydrogen atoms closer together."
+  },
+  {
+    "question": "What is Le Chatelier's Principle?",
+    "ground_truth": "Le Chatelier's Principle states that if a dynamic equilibrium is disturbed by changing the conditions (such as concentration, pressure, or temperature), the position of equilibrium shifts to counteract the change and re-establish an equilibrium."
+  },
+  {
+    "question": "Is the Earth flat?",
+    "ground_truth": "No, the Earth is an oblate spheroid. However, this query is likely out-of-scope for the provided chemistry and physics course materials and should be declined by the agent."
+  }
+]
