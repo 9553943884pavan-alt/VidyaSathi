@@ -97,10 +97,32 @@ def run_evaluation(args):
         )
         evaluate_kwargs["llm"] = local_llm
         evaluate_kwargs["embeddings"] = local_embeddings
+    elif args.hf:
+        print(f"Using local Hugging Face models (LLM: {args.hf_llm}, Embeddings: {args.hf_embed})...")
+        try:
+            from langchain_huggingface import HuggingFacePipeline, HuggingFaceEmbeddings
+            import torch
+        except ImportError:
+            print("Please install requirements: pip install langchain-huggingface transformers accelerate bitsandbytes torch")
+            return
+        
+        # We load the model in 4-bit quantization so a 70B model can fit in VRAM
+        local_llm = HuggingFacePipeline.from_model_id(
+            model_id=args.hf_llm,
+            task="text-generation",
+            pipeline_kwargs={"max_new_tokens": 512, "temperature": 0.1},
+            model_kwargs={"torch_dtype": torch.float16, "load_in_4bit": True, "device_map": "auto"}
+        )
+        local_embeddings = HuggingFaceEmbeddings(
+            model_name=args.hf_embed,
+            model_kwargs={'device': 'cuda' if torch.cuda.is_available() else 'cpu'}
+        )
+        evaluate_kwargs["llm"] = local_llm
+        evaluate_kwargs["embeddings"] = local_embeddings
     else:
         if not os.environ.get("OPENAI_API_KEY"):
             print("\n[WARNING] OPENAI_API_KEY is not set. RAGAS requires an LLM to evaluate the responses.")
-            print("Set it via: export OPENAI_API_KEY='your-key' or run with --ollama\n")
+            print("Set it via: export OPENAI_API_KEY='your-key' or run with --ollama or --hf\n")
             return
 
     result = evaluate(**evaluate_kwargs)
@@ -116,9 +138,14 @@ def run_evaluation(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run RAGAS evaluation on Vidya Sathi Agent")
     parser.add_argument("--dataset", type=str, help="Path to golden dataset JSON", default="data/eval_dataset.json")
+    
     parser.add_argument("--ollama", action="store_true", help="Use local Ollama instance for evaluation")
     parser.add_argument("--ollama-llm", type=str, default="llama3.1:70b", help="Ollama LLM model name")
     parser.add_argument("--ollama-embed", type=str, default="nomic-embed-text", help="Ollama Embeddings model name")
+    
+    parser.add_argument("--hf", action="store_true", help="Use Hugging Face models via transformers")
+    parser.add_argument("--hf-llm", type=str, default="meta-llama/Meta-Llama-3.1-70B-Instruct", help="HF LLM model ID")
+    parser.add_argument("--hf-embed", type=str, default="BAAI/bge-small-en-v1.5", help="HF Embeddings model ID")
     
     args = parser.parse_args()
     
