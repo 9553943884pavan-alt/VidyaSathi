@@ -102,17 +102,25 @@ def run_evaluation(args):
         print(f"Using local Hugging Face models (LLM: {args.hf_llm}, Embeddings: {args.hf_embed})...")
         try:
             from langchain_huggingface import HuggingFacePipeline, HuggingFaceEmbeddings
+            from transformers import BitsAndBytesConfig
             import torch
         except ImportError:
             print("Please install requirements: pip install langchain-huggingface transformers accelerate bitsandbytes torch")
             return
         
         # We load the model in 4-bit quantization so a 70B model can fit in VRAM
+        # Use BitsAndBytesConfig for newer transformers versions
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_quant_type="nf4"
+        )
+        
         local_llm = HuggingFacePipeline.from_model_id(
             model_id=args.hf_llm,
             task="text-generation",
             pipeline_kwargs={"max_new_tokens": 512, "temperature": 0.1},
-            model_kwargs={"torch_dtype": torch.float16, "load_in_4bit": True, "device_map": "auto"}
+            model_kwargs={"quantization_config": bnb_config, "device_map": "auto"}
         )
         local_embeddings = HuggingFaceEmbeddings(
             model_name=args.hf_embed,
