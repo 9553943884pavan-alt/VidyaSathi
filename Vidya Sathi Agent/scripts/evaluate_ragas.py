@@ -10,7 +10,8 @@ try:
         context_precision,
         context_recall,
     )
-except ImportError:
+except ImportError as e:
+    print(f"ImportError details: {e}")
     print("Please install ragas: pip install ragas datasets")
     exit(1)
 
